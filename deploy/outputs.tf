@@ -8,7 +8,7 @@ output "instance_ids" {
   value     = module.migratorydata_cluster.instance_ids
 }
 
-output "security_group" {
-  sensitive = false
-  value     = module.migratorydata_security_group.sg_id
+output "migratorydata_cluster_address" {
+  description = "dns name of the nlb"
+  value       = "http://${module.elb.elb_dns_name}"
 }

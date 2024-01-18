@@ -7,9 +7,20 @@ module "migratorydata_vpc" {
 module "migratorydata_subnet" {
   source = "../modules/subnet"
 
-  vpc_id     = module.migratorydata_vpc.vpc_id
-  cidr_block = var.cidr_block
-  gateway_id = module.migratorydata_vpc.gw_id
+  vpc_id            = module.migratorydata_vpc.vpc_id
+  cidr_block        = cidrsubnet(var.cidr_block, 4, 0)
+  availability_zone = var.availability_zone
+  gateway_id        = module.migratorydata_vpc.gw_id
+}
+
+module "elb_subnet" {
+  source = "../modules/subnet"
+
+  migratorydata_prefix = var.migratorydata_prefix
+  vpc_id               = module.migratorydata_vpc.vpc_id
+  cidr_block           = cidrsubnet(var.cidr_block, 4, 1)
+  availability_zone    = var.availability_zone
+  gateway_id           = module.migratorydata_vpc.gw_id
 }
 
 module "migratorydata_security_group" {
@@ -39,4 +50,16 @@ module "migratorydata_cluster" {
   ssh_user        = "admin"
   ssh_keyname     = var.ssh_keyname
   ssh_private_key = var.ssh_private_key
+}
+
+module "elb" {
+  source = "../modules/nlb"
+
+  prefix            = var.migratorydata_prefix
+  region_name       = var.region_name
+  instance_count    = var.num_instances
+  subnet_ids        = [module.elb_subnet.subnet_ids]
+  forwarding_config = var.forwarding_config
+  vpc_id            = module.migratorydata_vpc.vpc_id
+  instance_ids      = module.migratorydata_cluster.instance_ids
 }

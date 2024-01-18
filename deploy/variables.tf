@@ -40,12 +40,6 @@ variable "num_instances" {
   type        = number
 }
 
-variable "region_name" {
-  description = "Number of instances in the MigratoryData cluster."
-  default     = "us-east-1"
-  type        = string
-}
-
 variable "associate_public_ip_address" {
   description = "Flag to control use of public or private ips for ssh."
   default     = "true"
@@ -64,8 +58,18 @@ variable "ssh_private_key" {
 
 variable "cidr_block" {
   description = "cidr block"
-  default     = "10.0.2.0/24"
+  default     = "10.0.0.0/16"
   type        = string
+}
+
+variable "region_name" {
+  description = "Number of instances in the MigratoryData cluster."
+  type        = string
+}
+
+variable "availability_zone" {
+  description = "availability zone"
+  type = string
 }
 
 variable "migratorydata_ingress_with_cidr_blocks" {
@@ -136,4 +140,16 @@ variable "migratorydata_egress_with_cidr_blocks" {
       cidr_blocks = "0.0.0.0/0"
     }
   ]
+}
+
+variable "forwarding_config" {
+  description = "forwarding config of nlb"
+  type        = map(any)
+  default = {
+    "80" = {
+      dest_port   = 8800,
+      protocol    = "TCP"
+      description = "ws"
+    }
+  }
 }

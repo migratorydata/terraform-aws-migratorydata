@@ -35,13 +35,18 @@ A Terraform module to deploy and run MigratoryData on Amazon Web Services (AWS).
 ```bash
 cluster_name = "universe"
 migratorydata_prefix = "migratorydata"
-cidr_block = "10.0.2.0/24"
+cidr_block = "10.0.0.0/16"
+
+instance_type = "t2.large"
 
 # the number of nodes to start the MigratoryData cluster.
 num_instances = 3
 
 # set the maximum number of instances of MigratoryData Nodes to scale the deployment when necessary
 max_num_instances = 5
+
+region_name = "us-east-1"
+availability_zone = "us-east-1a"
 
 ssh_keyname = "ssh public key registered into aws dashboard"
 ssh_private_key = "path to private key to access the ec2 machines and install all the necessary files"

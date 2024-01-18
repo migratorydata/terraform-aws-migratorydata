@@ -1,8 +1,9 @@
 resource "aws_subnet" "sn" {
-
+  
   vpc_id = var.vpc_id
-  cidr_block = cidrsubnet(var.cidr_block, 4, 0)
-
+  cidr_block = var.cidr_block
+  availability_zone = var.availability_zone
+  
   tags = {
     Name = "${var.migratorydata_prefix}-sn"
   }

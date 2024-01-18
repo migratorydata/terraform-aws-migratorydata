@@ -15,3 +15,7 @@ variable "vpc_id" {
 variable "gateway_id" {
   type = string
 }
+
+variable "availability_zone" {
+  type = string
+}

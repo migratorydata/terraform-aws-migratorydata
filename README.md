@@ -6,29 +6,41 @@ A Terraform module to deploy and run MigratoryData on Amazon Web Services (AWS).
 
 - To download and install Terraform, follow the steps given [here](https://www.terraform.io/downloads.html).
 
-- Export the required credentials in current shell,
+```bash
+# for MacOS use brew
+brew tap hashicorp/tap
+brew install hashicorp/tap/terraform
+```
 
-  ```sh
-  export AWS_ACCESS_KEY_ID="AKIAIOSFODNN7EXAMPLE"
-  export AWS_SECRET_ACCESS_KEY="wJal/…/bPxRfiCYEXAMPLEKEY"
-  ```
+- Login to AWS with the following command and follow the instructions on the screen to configure your AWS credentials:
+
+```bash
+aws configure
+```
+
+- Or export the required credentials in current shell,
+
+```bash
+export AWS_ACCESS_KEY_ID="AKIAIOSFODNN7EXAMPLE"
+export AWS_SECRET_ACCESS_KEY="wJal/…/bPxRfiCYEXAMPLEKEY"
+```
 
   For other authentication methods, take a look at the [AWS
   Provider](https://registry.terraform.io/providers/hashicorp/aws/latest/docs#authentication)
   documentation.
 
-- Clone this repo and go to `deploy` directory to run a MigratoryData cluster,
+- Clone github repository with terraform configuration files:
 
-  ```sh
-  $ git clone https://this_repo
-  $ cd this_repo
-  ```
+```sh
+git clone https://github.com/migratorydata/terraform-aws-migratorydata.git
+cd terraform-aws-migratorydata/deploy
+```
 
-- Depending on the features used from MigratoryData server update all the configuration files found in directory `configs`.
+- Update the configuration files from `configs` directory with your values. See the [Configuration](https://migratorydata.com/docs/server/configuration/) section for more details.
 
-- Add any extension if necessary to directory `extensions`. 
+- Add any extensions to the `extensions` directory.
 
-- When the EC2 machines are prepared all the configs files and extensions are copied on each one.
+- When the EC2 machines are created, all the configs and extensions files are copied on each instance.
 
 - Create `terraform.tfvars` file to configure the ec2 machines with the following vars
 
@@ -51,46 +63,74 @@ availability_zone = "us-east-1a"
 ssh_keyname = "ssh public key registered into aws dashboard"
 ssh_private_key = "path to private key to access the ec2 machines and install all the necessary files"
 ```
+For terraform to install all the necessary files on the EC2 instances, you need to provide the private key to access the EC2 machines and the public key registered into the AWS dashboard.
 
+You can generate a new SSH key pair using the ssh-keygen command on your local machine, and then import the public key to AWS. Here's how you can do it:
 
-## Usage
+```bash
+# Generate the SSH key pair
+ssh-keygen -t rsa -b 4096 -C "your_email@example.com"
 
-Initialize Terraform first if you have not already done so.
+# The command will prompt you to enter a file in which to save the key.
+# You can press enter to use the default location, or specify a path where you want your key pair to be saved.
 
-```
-$ terraform init
-```
-
-To check what changes are going to happen in the environment run the following,
-
-```
-$ terraform plan
+# You'll then be asked to optionally enter a passphrase for added security.
 ```
 
-Now run the following to create the instances and bring up the cluster.
+This will create two files: one for the private key (default is `~/.ssh/id_rsa`), and one for the public key (default is `~/.ssh/id_rsa.pub`).
 
-```
-$ terraform apply
-```
+Next, you need to import the public key to AWS. You can do this in the AWS Management Console:
 
-Once the cluster is created, you can go to the URL `http://<node ip or dns name>:8800` to view the MigratoryData Debug UI. You can find the node's IP address or DNS by running the following:
+- Open the Amazon EC2 console at https://console.aws.amazon.com/ec2/.
+- In the navigation pane, under `NETWORK & SECURITY`, choose `Key Pairs`.
+- Choose Import Key Pair.
+- In the Import Key Pair dialog box, choose Browse and select the public key file (.pub file).
+- Choose Import.
 
-```
-$ terraform state show module.migratorydata-db-cluster.aws_instance.migratorydata_nodes[0]
-```
+Update terraform.tfvars file with the path to the private key and the name of the public key registered into the AWS dashboard.
 
-You can access the MigratoryData Debug UI by going to public IP address of any of the instances at port `8800`. The IP address can be viewed by replacing `0` from above command with desired index.
 
-You can check the state of the nodes at any point by running the following command.
+#### Deploy the cluster
 
-```
-$ terraform show
-```
+Initialize terraform:
 
-To destroy what we just created, you can run the following command.
-
-```
-$ terraform destroy
+```bash
+terraform init
 ```
 
-`Note:- To make any changes in the created cluster you will need the terraform state files. So don't delete state files of Terraform.`
+Check the deployment plan:
+
+```bash
+terraform plan
+```
+
+Apply the deployment plan:
+
+```bash
+terraform apply
+```
+
+#### Check the deployment
+
+You can access the MigratoryData cluster using the NLB DNS name. You can find it in the AWS dashboard or by running the following command under `migratorydata_cluster_address` output:
+
+```bash
+terraform output 
+```
+
+#### Scale
+
+To scale the deployment, update the `num_instances` variable in the `terraform.tfvars` file and run the following commands:
+
+```bash
+terraform plan
+terraform apply
+```
+
+#### Cleanup
+
+To destroy the deployment run the following command:
+
+```bash
+terraform destroy
+```

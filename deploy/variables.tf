@@ -12,7 +12,7 @@ variable "cluster_name" {
 
 variable "migratorydata_download_url" {
   description = "The download url for MigratoryData server to install"
-  default     = "https://migratorydata.com/releases/migratorydata-6.0.14/migratorydata-6.0.14-build20231031.x86_64.deb"
+  default     = "https://migratorydata.com/releases/migratorydata-6.0.15/migratorydata-6.0.15-build20240209.x86_64.deb"
   type        = string
 }
 

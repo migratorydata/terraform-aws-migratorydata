@@ -1,14 +1,12 @@
-variable "migratorydata_prefix" {
-  description = "Prefix prepended to all resources created."
-  default     = "migratorydata-"
-  type        = string
+variable "namespace" {
+  type = string
 }
 
-variable "ingress_with_cidr_blocks" {
+variable "ingress_rules" {
   type = list(any)
 }
 
-variable "egress_with_cidr_blocks" {
+variable "egress_rules" {
   type = list(any)
 }
 

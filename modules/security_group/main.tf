@@ -1,10 +1,10 @@
 locals {
-  ingress_rules = var.ingress_with_cidr_blocks
-  egress_rules  = var.egress_with_cidr_blocks
+  ingress_rules = var.ingress_rules
+  egress_rules  = var.egress_rules
 }
 
 resource "aws_security_group" "sg" {
-  name        = "${var.migratorydata_prefix}-sg"
+  name        = "${var.namespace}-sg"
   description = "Allow inbound and outbound traffic"
   vpc_id      = var.vpc_id
 
@@ -33,6 +33,6 @@ resource "aws_security_group" "sg" {
   }
 
   tags = {
-    Name = "${var.migratorydata_prefix}-sg"
+    Name = "${var.namespace}-sg"
   }
 }

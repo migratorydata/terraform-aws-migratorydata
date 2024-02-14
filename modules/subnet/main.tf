@@ -1,11 +1,11 @@
 resource "aws_subnet" "sn" {
   
   vpc_id = var.vpc_id
-  cidr_block = var.cidr_block
+  cidr_block = var.address_space
   availability_zone = var.availability_zone
   
   tags = {
-    Name = "${var.migratorydata_prefix}-sn"
+    Name = "${var.namespace}-sn"
   }
 }
 
@@ -18,7 +18,7 @@ resource "aws_route_table" "rt" {
   }
 
   tags = {
-    Name = "${var.migratorydata_prefix}-rt"
+    Name = "${var.namespace}-rt"
   }
 }
 

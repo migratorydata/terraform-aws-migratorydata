@@ -1,6 +1,6 @@
-output "server-debug" {
+output "cluster-nodes-public-ips" {
   sensitive = false
-  value     = "http://${module.migratorydata_cluster.public_ips[0]}:8800"
+  value     = module.migratorydata_cluster.public_ips
 }
 
 output "instance_ids" {
@@ -8,7 +8,7 @@ output "instance_ids" {
   value     = module.migratorydata_cluster.instance_ids
 }
 
-output "migratorydata_cluster_address" {
-  description = "dns name of the nlb"
+output "migratorydata-nlb-dns" {
+  description = "Cluster DNS access address."
   value       = "http://${module.elb.elb_dns_name}"
 }

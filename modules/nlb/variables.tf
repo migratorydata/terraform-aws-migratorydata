@@ -1,8 +1,8 @@
-variable "prefix" {
+variable "namespace" {
   type = string
 }
 
-variable "region_name" {
+variable "region" {
   type = string
 }
 

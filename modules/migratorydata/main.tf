@@ -1,7 +1,7 @@
 
 locals {
   count_range               = range(0, var.max_num_instances)
-  migratorydata_cluster_ips = join(",", [for index in local.count_range : format("%s:8801", cidrhost(var.cidr_block, index + 5))])
+  migratorydata_cluster_ips = join(",", [for index in local.count_range : format("%s:8801", cidrhost(var.address_space, index + 5))])
 }
 
 data "aws_ami" "migratorydata_ami" {
@@ -40,10 +40,10 @@ resource "aws_instance" "migratorydata_nodes" {
   subnet_id                   = var.subnet_id
   vpc_security_group_ids      = var.sg_ids
 
-  private_ip = cidrhost(var.cidr_block, count.index + 5)
+  private_ip = cidrhost(var.address_space, count.index + 5)
 
   tags = {
-    Name          = "${var.migratorydata_prefix}${var.cluster_name}-n${format("%d", count.index + 1)}"
+    Name          = "${var.namespace}-vm-n${format("%d", count.index + 1)}"
     MigratoryData = "true"
     Service       = "MigratoryData"
   }

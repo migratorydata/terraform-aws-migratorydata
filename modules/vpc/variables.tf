@@ -1,9 +1,7 @@
-variable "migratorydata_prefix" {
-  description = "Prefix prepended to all resources created."
-  default     = "migratorydata-"
-  type        = string
+variable "namespace" {
+  type = string
 }
 
-variable "cidr_block" {
+variable "address_space" {
   type = string
 }

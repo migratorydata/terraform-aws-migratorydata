@@ -1,23 +1,11 @@
-##########################################################
-#
-# Default values for creating a MigratoryData cluster on AWS.
-#
-##########################################################
-
-variable "cluster_name" {
-  description = "The name for the cluster (universe) being created."
-  default = "migratorydata-cluster"
-  type        = string
-}
 
 variable "migratorydata_download_url" {
   description = "The download url for MigratoryData server to install"
-  default     = "https://migratorydata.com/releases/migratorydata-6.0.15/migratorydata-6.0.15-build20240209.x86_64.deb"
   type        = string
 }
 
-variable "migratorydata_prefix" {
-  description = "Prefix"
+variable "namespace" {
+  description = "Prefix all resources with this namespace."
   default     = "migratorydata-"
   type        = string
 }
@@ -41,7 +29,7 @@ variable "num_instances" {
 }
 
 variable "associate_public_ip_address" {
-  description = "Flag to control use of public or private ips for ssh."
+  description = "Flag to control if instances have a public IP address."
   default     = "true"
   type        = string
 }
@@ -56,14 +44,14 @@ variable "ssh_private_key" {
   type        = string
 }
 
-variable "cidr_block" {
-  description = "cidr block"
+variable "address_space" {
+  description = "Address block for the VPC."
   default     = "10.0.0.0/16"
   type        = string
 }
 
-variable "region_name" {
-  description = "Number of instances in the MigratoryData cluster."
+variable "region" {
+  description = "Region name for AWS. Example: 'us-west-2'"
   type        = string
 }
 
@@ -72,8 +60,8 @@ variable "availability_zone" {
   type = string
 }
 
-variable "migratorydata_ingress_with_cidr_blocks" {
-  description = "ingress of MigratoryData."
+variable "migratorydata_ingress_security_rules" {
+  description = "Ingress security rules of MigratoryData"
   type        = list(any)
   default = [
     {
@@ -128,8 +116,8 @@ variable "migratorydata_ingress_with_cidr_blocks" {
   ]
 }
 
-variable "migratorydata_egress_with_cidr_blocks" {
-  description = "egress with cidr blocks"
+variable "migratorydata_egress_security_rules" {
+  description = "Egress security rules of MigratoryData."
   type        = list(any)
   default = [
     {
@@ -142,8 +130,8 @@ variable "migratorydata_egress_with_cidr_blocks" {
   ]
 }
 
-variable "forwarding_config" {
-  description = "forwarding config of nlb"
+variable "nlb_forwarding_config" {
+  description = "Forwarding config of nlb"
   type        = map(any)
   default = {
     "80" = {

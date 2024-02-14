@@ -25,9 +25,7 @@ export AWS_ACCESS_KEY_ID="AKIAIOSFODNN7EXAMPLE"
 export AWS_SECRET_ACCESS_KEY="wJal/…/bPxRfiCYEXAMPLEKEY"
 ```
 
-  For other authentication methods, take a look at the [AWS
-  Provider](https://registry.terraform.io/providers/hashicorp/aws/latest/docs#authentication)
-  documentation.
+For other authentication methods, take a look at the [AWS Provider](https://registry.terraform.io/providers/hashicorp/aws/latest/docs#authentication) documentation.
 
 - Clone github repository with terraform configuration files:
 
@@ -45,23 +43,24 @@ cd terraform-aws-migratorydata/deploy
 - Create `terraform.tfvars` file to configure the ec2 machines with the following vars
 
 ```bash
-cluster_name = "universe"
-migratorydata_prefix = "migratorydata"
-cidr_block = "10.0.0.0/16"
+
+namespace = "migratorydata"
+address_space = "10.0.0.0/16"
 
 instance_type = "t2.large"
-
 # the number of nodes to start the MigratoryData cluster.
 num_instances = 3
 
 # set the maximum number of instances of MigratoryData Nodes to scale the deployment when necessary
 max_num_instances = 5
 
-region_name = "us-east-1"
+region = "us-east-1"
 availability_zone = "us-east-1a"
 
 ssh_keyname = "ssh public key registered into aws dashboard"
 ssh_private_key = "path to private key to access the ec2 machines and install all the necessary files"
+
+migratorydata_download_url = "https://migratorydata.com/releases/migratorydata-6.0.15/migratorydata-6.0.15-build20240209.x86_64.deb"
 ```
 For terraform to install all the necessary files on the EC2 instances, you need to provide the private key to access the EC2 machines and the public key registered into the AWS dashboard.
 

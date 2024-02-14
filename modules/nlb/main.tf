@@ -1,10 +1,10 @@
 locals {
-  target_port     = [for key, value in var.forwarding_config : value.dest_port]
-  dest_to_src     = zipmap([for key, value in var.forwarding_config : value.dest_port], [for key, value in var.forwarding_config : key])
+  target_port = [for key, value in var.forwarding_config : value.dest_port]
+  dest_to_src = zipmap([for key, value in var.forwarding_config : value.dest_port], [for key, value in var.forwarding_config : key])
 }
 
 resource "aws_lb" "lb" {
-  name               = "${var.prefix}-nlb"
+  name               = "${var.namespace}-nlb"
   internal           = false
   load_balancer_type = "network"
   subnets            = var.subnet_ids
@@ -23,12 +23,11 @@ resource "aws_lb_listener" "listener" {
 
 resource "aws_lb_target_group" "tg" {
   for_each    = var.forwarding_config
-  name        = "${var.prefix}-tg-${each.key}-${each.value.dest_port}"
+  name        = "${var.namespace}-tg-${each.key}-${each.value.dest_port}"
   port        = each.value.dest_port
   protocol    = each.value.protocol
   vpc_id      = var.vpc_id
   target_type = "instance"
-  # deregistration_delay    = 90
   health_check {
     interval            = 30
     port                = each.value.dest_port

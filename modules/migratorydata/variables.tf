@@ -23,11 +23,6 @@ variable "namespace" {
   type = string
 }
 
-variable "ssh_keyname" {
-  description = "The SSH keypair name to use for the instances."
-  type        = string
-}
-
 variable "ssh_private_key" {
   description = "The private key to use when connecting to the instances."
   type        = string

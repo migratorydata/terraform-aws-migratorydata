@@ -52,7 +52,6 @@ module "migratorydata_cluster" {
 
   # debian ssh login user is `admin`
   ssh_user        = "admin"
-  ssh_keyname     = var.ssh_keyname
   ssh_private_key = var.ssh_private_key
 
   migratorydata_download_url = var.migratorydata_download_url

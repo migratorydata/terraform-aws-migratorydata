@@ -4,6 +4,15 @@ locals {
   migratorydata_cluster_ips = join(",", [for index in local.count_range : format("%s:8801", cidrhost(var.address_space, index + 5))])
 }
 
+data "tls_public_key" "private_key_openssh" {
+  private_key_openssh = file(var.ssh_private_key)
+}
+
+resource "aws_key_pair" "generated_key" {
+  key_name   = "${var.namespace}-keypair"
+  public_key = data.tls_public_key.private_key_openssh.public_key_openssh
+}
+
 data "aws_ami" "migratorydata_ami" {
   most_recent = true
   owners      = ["136693071363"]
@@ -36,7 +45,7 @@ resource "aws_instance" "migratorydata_nodes" {
   ami                         = data.aws_ami.migratorydata_ami.id
   associate_public_ip_address = var.associate_public_ip_address
   instance_type               = var.instance_type
-  key_name                    = var.ssh_keyname == "" ? null : var.ssh_keyname
+  key_name                    = aws_key_pair.generated_key.key_name
   subnet_id                   = var.subnet_id
   vpc_security_group_ids      = var.sg_ids
 

@@ -1,0 +1,33 @@
+- name: Update MigratoryData server
+  hosts: migratorydata
+  become: yes
+  serial: 1
+  tasks:
+    - name: Include variables
+      include_vars: vars.yaml
+
+    - block:
+      - name: Stop the service
+        ansible.builtin.systemd:
+          name: migratorydata
+          state: stopped
+
+      - name: Download the Debian package
+        get_url:
+          url: "{{ package_url }}"
+          dest: "/tmp/{{ package_name }}"
+
+      - name: Update the Debian package
+        apt:
+          deb: "/tmp/{{ package_name }}"
+
+      - name: Start the service
+        ansible.builtin.systemd:
+          name: migratorydata
+          state: started
+      always:
+      - name: Ensure the service is running
+      # TODO - add wait time to wait for the clients to rebalance between the nodes 
+        ansible.builtin.systemd:
+          name: migratorydata
+          state: started

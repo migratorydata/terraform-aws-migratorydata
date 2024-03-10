@@ -31,7 +31,11 @@ variable "ssh_private_key" {
 variable "ssh_user" {
   description = "The user name to use when connecting to the instances."
   type        = string
-  default     = "admin"
+}
+
+variable "enable_monitoring" {
+  description = "Enable monitoring for the MigratoryData cluster."
+  type        = bool
 }
 
 variable "region" {
@@ -41,11 +45,6 @@ variable "region" {
 
 variable "vpc_id" {
   description = "The VPC ID to create the security groups in."
-  type        = string
-}
-
-variable "migratorydata_download_url" {
-  description = "The download url for MigratoryData server to install"
   type        = string
 }
 
@@ -59,9 +58,4 @@ variable "subnet_id" {
 
 variable "address_space" {
   type = string
-}
-
-variable "cloud_provider" {
-  type    = string
-  default = "AWS"
 }

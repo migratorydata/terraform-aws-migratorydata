@@ -1,9 +1,4 @@
 
-variable "migratorydata_download_url" {
-  description = "The download url for MigratoryData server to install"
-  type        = string
-}
-
 variable "namespace" {
   description = "Prefix all resources with this namespace."
   default     = "migratorydata-"
@@ -37,6 +32,18 @@ variable "associate_public_ip_address" {
 variable "ssh_private_key" {
   description = "The private key to use when connecting to the instances."
   type        = string
+}
+
+variable "ssh_user" {
+  description = "The user name to use when connecting to the instances."
+  type        = string
+  default     = "admin"
+}
+
+variable "enable_monitoring" {
+  description = "Enable monitoring for the MigratoryData cluster."
+  type        = bool
+  default     = false
 }
 
 variable "address_space" {
@@ -102,9 +109,30 @@ variable "migratorydata_ingress_security_rules" {
       cidr_blocks = "0.0.0.0/0"
     },
     {
-      description = "statistics"
+      description = "prometheus scrape statistics"
       from_port   = 9900
       to_port     = 9900
+      protocol    = "tcp"
+      cidr_blocks = "0.0.0.0/0"
+    },
+    {
+      description = "grafana"
+      from_port   = 3000
+      to_port     = 3000
+      protocol    = "tcp"
+      cidr_blocks = "0.0.0.0/0"
+    },
+    {
+      description = "loki"
+      from_port   = 3100
+      to_port     = 3100
+      protocol    = "tcp"
+      cidr_blocks = "0.0.0.0/0"
+    },
+    {
+      description = "promtail"
+      from_port   = 9080
+      to_port     = 9080
       protocol    = "tcp"
       cidr_blocks = "0.0.0.0/0"
     },

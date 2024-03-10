@@ -1,0 +1,1 @@
+${ monitor_private_ip }

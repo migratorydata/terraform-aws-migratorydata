@@ -83,7 +83,7 @@ This will generate in the `.ssh` directory a public key, i.e. `~/.ssh/id_rsa.pub
 Update `terraform.tfvars` file with the path to the private key.
 
 
-## Deploy MigratoryData
+## Create infrastructure for MigratoryData cluster
 
 Initialize terraform:
 ```bash
@@ -98,6 +98,33 @@ terraform plan
 Apply the deployment plan:
 ```bash
 terraform apply
+```
+
+## Install MigratoryData on the infrastructure
+
+After the infrastructure is created, you can install MigratoryData on the virtual machines using the following command:
+
+```bash
+export ANSIBLE_HOST_KEY_CHECKING=False
+ansible-playbook ansible/install.yaml -i artifacts/hosts.ini
+```
+
+## Install monitoring and logging if enable_monitoring is true
+
+If you have enabled monitoring and logging, you can install the monitoring and logging tools on the virtual machines using the following command:
+
+```bash
+
+ansible-galaxy collection install prometheus.prometheus
+ansible-galaxy collection install grafana.grafana
+
+# For mac you need tar and gnu-tar
+brew install gnu-tar
+
+# Fix for MAC OS error `ERROR! A worker was found in a dead state`
+export OBJC_DISABLE_INITIALIZE_FORK_SAFETY=YES
+export ANSIBLE_HOST_KEY_CHECKING=False
+ansible-playbook ansible/monitoring.yaml -i artifacts/hosts.ini
 ```
 
 ## Verify deployment
@@ -123,6 +150,21 @@ To scale the deployment, update the `num_instances` variable in the `terraform.t
 ```bash
 terraform plan
 terraform apply
+```
+
+If the scale is with increasing the number of instances, you need to run the following command to install MigratoryData on the new instances:
+
+```bash
+export ANSIBLE_HOST_KEY_CHECKING=False
+ansible-playbook ansible/install.yaml -i artifacts/hosts.ini
+```
+
+## Upgrade
+
+Update MigratoryData Server version using variables `package_url` and `package_name` from `vars.yaml` file and run the following command:
+```bash
+export ANSIBLE_HOST_KEY_CHECKING=False
+ansible-playbook ansible/update.yaml -i artifacts/hosts.ini
 ```
 
 ## Uninstall

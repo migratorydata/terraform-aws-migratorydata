@@ -11,4 +11,4 @@ availability_zone = "us-east-1a"
 
 ssh_private_key = "~/.ssh/id_rsa"
 
-migratorydata_download_url = "https://migratorydata.com/releases/migratorydata-6.0.15/migratorydata-6.0.15-build20240209.x86_64.deb"
+enable_monitoring = true

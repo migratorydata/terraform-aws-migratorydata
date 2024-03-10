@@ -51,10 +51,10 @@ module "migratorydata_cluster" {
   max_num_instances           = var.max_num_instances
 
   # debian ssh login user is `admin`
-  ssh_user        = "admin"
+  ssh_user        = var.ssh_user
   ssh_private_key = var.ssh_private_key
 
-  migratorydata_download_url = var.migratorydata_download_url
+  enable_monitoring = var.enable_monitoring
 }
 
 module "elb" {

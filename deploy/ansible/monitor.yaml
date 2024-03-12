@@ -43,10 +43,11 @@
         datasource: prometheus
 
 - hosts: monitor
-  vars:
-    local_files_dir: "{{ playbook_dir }}/.."
   become: yes
   tasks:
+    - name: Include variables
+      include_vars: vars.yaml
+
     - name: Download Loki binary
       get_url:
         url: https://github.com/grafana/loki/releases/download/v2.9.5/loki-linux-amd64.zip

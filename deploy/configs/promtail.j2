@@ -6,7 +6,7 @@ positions:
   filename: /tmp/positions.yaml
 
 clients:
-  - url: http://${ monitor_private_ip }:3100/loki/api/v1/push
+  - url: http://{{ monitor_ip }}:3100/loki/api/v1/push
 
 scrape_configs:
   - job_name: migratorydata
@@ -16,4 +16,5 @@ scrape_configs:
         labels:
           job: migratorydata
           __path__: "/var/log/migratorydata/all/{out.log,gc-*}"
-          private_ip: "{{ ansible_default_ipv4.address }}"
+          private_ip: "{{ ansible_default_ipv4.address|default(ansible_all_ipv4_addresses[0]) }}"
+    read_from_head: true

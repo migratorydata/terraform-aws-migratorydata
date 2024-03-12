@@ -42,23 +42,3 @@ resource "local_file" "cluster_members" {
   )
   filename = "${path.module}/artifacts/clustermembers"
 }
-
-resource "local_file" "monitor_private_ip" {
-  count = var.enable_monitoring ? 1 : 0
-  content = templatefile("${path.module}/templates/monitor_private_ip.tpl",
-    {
-      monitor_private_ip = module.migratorydata_cluster.monitor_private_ip
-    }
-  )
-  filename = "${path.module}/artifacts/monitor_private_ip"
-}
-
-resource "local_file" "promtail_configuration" {
-  count = var.enable_monitoring ? 1 : 0
-  content = templatefile("${path.module}/templates/promtail.tpl",
-    {
-      monitor_private_ip = module.migratorydata_cluster.monitor_private_ip
-    }
-  )
-  filename = "${path.module}/artifacts/promtail.yaml.j2"
-}

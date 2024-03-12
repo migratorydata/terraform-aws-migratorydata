@@ -33,6 +33,7 @@ Clone the MigratoryData's repository with terraform configuration files:
 ```bash
 git clone https://github.com/migratorydata/terraform-aws-migratorydata
 cd terraform-aws-migratorydata/deploy
+git checkout ansible
 ```
 
 Update if necessary the configuration files from the `deploy/configs` directory. See the [Configuration](https://migratorydata.com/docs/server/configuration/) guide for more details. If you developed custom extensions, add them to the the `deploy/extensions` directory.
@@ -49,7 +50,7 @@ Update `terraform.tfvars` file to match your configuration. The following variab
   - `max_num_instances` - The maximum number of instances of MigratoryData Nodes to scale the deployment when necessary.
   - `instance_type` - The type of the virtual machines to be deployed.
   - `ssh_private_key` - The path to the private key used to access the virtual machines.
-  - `migratorydata_download_url` - The download URL for the MigratoryData package.
+  - `enable_monitoring` - A boolean value to enable or disable monitoring and logging.
 
 ```bash
 
@@ -65,7 +66,7 @@ max_num_instances = 5
 instance_type = "t2.large"
 ssh_private_key = "~/.ssh/id_rsa"
 
-migratorydata_download_url = "https://migratorydata.com/releases/migratorydata-6.0.15/migratorydata-6.0.15-build20240209.x86_64.deb"
+enable_monitoring = true
 ```
 
 ## SSH keys
@@ -100,6 +101,14 @@ Apply the deployment plan:
 terraform apply
 ```
 
+## Install all the requirements for ansible
+
+```bash
+ansible-galaxy collection install community.general
+ansible-galaxy collection install prometheus.prometheus
+ansible-galaxy collection install grafana.grafana
+```
+
 ## Install MigratoryData on the infrastructure
 
 After the infrastructure is created, you can install MigratoryData on the virtual machines using the following command:
@@ -109,15 +118,11 @@ export ANSIBLE_HOST_KEY_CHECKING=False
 ansible-playbook ansible/install.yaml -i artifacts/hosts.ini
 ```
 
-## Install monitoring and logging if enable_monitoring is true
+## Install monitoring and logging if enable_monitoring is set to true
 
 If you have enabled monitoring and logging, you can install the monitoring and logging tools on the virtual machines using the following command:
 
 ```bash
-
-ansible-galaxy collection install prometheus.prometheus
-ansible-galaxy collection install grafana.grafana
-
 # For mac you need tar and gnu-tar
 brew install gnu-tar
 
@@ -159,7 +164,7 @@ export ANSIBLE_HOST_KEY_CHECKING=False
 ansible-playbook ansible/install.yaml -i artifacts/hosts.ini
 ```
 
-## Upgrade
+## Update MigratoryData Server version
 
 Update MigratoryData Server version using variables `package_url` and `package_name` from `vars.yaml` file and run the following command:
 ```bash

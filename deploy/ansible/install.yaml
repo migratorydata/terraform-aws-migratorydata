@@ -50,11 +50,10 @@
 - name: Finalize configuration
   hosts: migratorydata
   become: yes
-  vars:
-    local_files_dir: "{{ playbook_dir }}/.."
-    artifacts_dir: "{{ playbook_dir }}/.."
-    migratorydata_home: "/etc/migratorydata"
   tasks:
+    - name: Include variables
+      include_vars: vars.yaml
+
     - name: Get NODEIP
       ansible.builtin.shell: "curl http://169.254.169.254/latest/meta-data/local-ipv4"
       register: result
@@ -136,36 +135,30 @@
       meta: flush_handlers
 
   handlers:
-  - name: Restart the server
+  - name: Restart migratorydata
     systemd:
       name: migratorydata
       state: restarted
 
 - name: Install and configure Promtail
   hosts: migratorydata
-  vars:
-    artifacts_dir: "{{ playbook_dir }}/.."
   become: yes
   tasks:
-    - name: Check if monitor_private_ip file exists
-      become: no
-      stat:
-        path: "{{ artifacts_dir }}/artifacts/monitor_private_ip"
-      delegate_to: localhost
-      register: monitor_private_ip_file
+    - name: Include variables
+      include_vars: vars.yaml
 
     - name: Download Promtail binary
       get_url:
         url: "https://github.com/grafana/loki/releases/download/v2.9.5/promtail-linux-amd64.zip"
         dest: "/tmp/promtail.zip"
         mode: '0755'
-      when: monitor_private_ip_file.stat.exists
+      when: monitor_ip is defined and monitor_ip != ''
 
     - name: Install unzip if not present
       apt:
         name: unzip
         state: present
-      when: monitor_private_ip_file.stat.exists
+      when: monitor_ip is defined and monitor_ip != ''
 
     - name: Unzip Promtail binary
       unarchive:
@@ -173,25 +166,25 @@
         dest: "/usr/local/bin"
         remote_src: yes
         creates: "/usr/local/bin/promtail-linux-amd64"
-      when: monitor_private_ip_file.stat.exists
+      when: monitor_ip is defined and monitor_ip != ''
 
     - name: Set promtail permissions
       file:
         path: "/usr/local/bin/promtail-linux-amd64"
         mode: '0755'
-      when: monitor_private_ip_file.stat.exists
+      when: monitor_ip is defined and monitor_ip != ''
 
     - name: Create Promtail config directory
       file:
         path: "/etc/promtail"
         state: directory
-      when: monitor_private_ip_file.stat.exists
+      when: monitor_ip is defined and monitor_ip != ''
 
     - name: Copy Promtail config file
       template:
-        src: "{{ artifacts_dir }}/artifacts/promtail.yaml.j2"
+        src: "{{ local_files_dir }}/configs/promtail.j2"
         dest: "/etc/promtail/config.yaml"
-      when: monitor_private_ip_file.stat.exists
+      when: monitor_ip is defined and monitor_ip != ''
 
     - name: Create Promtail service
       copy:
@@ -206,16 +199,16 @@
 
           [Install]
           WantedBy=multi-user.target
-      when: monitor_private_ip_file.stat.exists
+      when: monitor_ip is defined and monitor_ip != ''
 
     - name: Reload systemd
       systemd:
         daemon_reload: yes
-      when: monitor_private_ip_file.stat.exists
+      when: monitor_ip is defined and monitor_ip != ''
 
     - name: Enable and start Promtail service
       systemd:
         name: promtail
         enabled: yes
         state: started
-      when: monitor_private_ip_file.stat.exists
+      when: monitor_ip is defined and monitor_ip != ''

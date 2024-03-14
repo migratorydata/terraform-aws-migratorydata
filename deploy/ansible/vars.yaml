@@ -3,6 +3,10 @@ package_url: "https://migratorydata.com/releases/migratorydata-6.0.15/migratoryd
 package_name: "migratorydata-6.0.15-build20240209.x86_64.deb"
 #package_name: "migratorydata-6.0.14-build20231031.x86_64.deb"
 
-local_files_dir: "{{ playbook_dir }}/.."
-artifacts_dir: "{{ playbook_dir }}/.."
-migratorydata_home: "/etc/migratorydata"
+root_path: "{{ playbook_dir }}/.."
+
+grafana_loki_url: "https://github.com/grafana/loki/releases/download/v2.9.5/loki-linux-amd64.zip"
+
+#grafana_admin_pass: "update_password"
+
+promtail_url: "https://github.com/grafana/loki/releases/download/v2.9.5/promtail-linux-amd64.zip"

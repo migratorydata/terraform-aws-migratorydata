@@ -26,8 +26,12 @@
           name: migratorydata
           state: started
       always:
+
       - name: Ensure the service is running
-      # TODO - add wait time to wait for the clients to rebalance between the nodes 
         ansible.builtin.systemd:
           name: migratorydata
           state: started
+
+      - name: Pause for 360 seconds (pause the execution of the playbook for 360 seconds to allow the service to start properly)
+        pause:
+          seconds: 360

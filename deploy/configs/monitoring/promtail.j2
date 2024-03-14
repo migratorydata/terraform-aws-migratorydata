@@ -16,5 +16,4 @@ scrape_configs:
         labels:
           job: migratorydata
           __path__: "/var/log/migratorydata/all/{out.log,gc-*}"
-          private_ip: "{{ ansible_default_ipv4.address|default(ansible_all_ipv4_addresses[0]) }}"
-    read_from_head: true
+          node: "{{ ansible_default_ipv4.address|default(ansible_all_ipv4_addresses[0]) }}"

@@ -35,13 +35,16 @@
   tasks:
     - name: Include variables
       include_vars: vars.yaml
+
     - name: Download the Debian package
       get_url:
         url: "{{ package_url }}"
         dest: "/tmp/{{ package_name }}"
+
     - name: Install the Debian package
       apt:
         deb: "/tmp/{{ package_name }}"
+
     - name: Enable service
       ansible.builtin.systemd:
         name: migratorydata
@@ -54,79 +57,71 @@
     - name: Include variables
       include_vars: vars.yaml
 
-    - name: Get NODEIP
-      ansible.builtin.shell: "curl http://169.254.169.254/latest/meta-data/local-ipv4"
-      register: result
-
-    - name: Set NODEIP as a fact
-      set_fact:
-        NODEIP: "{{ result.stdout }}"
-
     - name: Get NODES
       set_fact:
-        NODES: "{{ lookup('file', '{{ artifacts_dir }}/artifacts/clustermembers') }}"
+        NODES: "{{ lookup('file', '{{ root_path }}/artifacts/clustermembers') }}"
 
     - name: Copy migratorydata.conf
       template:
-        src: "{{ local_files_dir }}/configs/migratorydata.conf.j2"
-        dest: "{{ migratorydata_home }}/migratorydata.conf"
+        src: "{{ root_path }}/configs/migratorydata.conf"
+        dest: "/etc/migratorydata/migratorydata.conf"
         force: yes
       vars:
-        node_ip: "{{ NODEIP }}"
+        node_ip: "{{ ansible_default_ipv4.address|default(ansible_all_ipv4_addresses[0]) }}"
         cluster_nodes: "{{ NODES }}"
       notify: Restart migratorydata
 
-    - name: Copy authorization-jwt-configuration.properties if it exists
+    - name: Copy authorization-jwt/configuration.properties if it exists
       copy:
-        src: "{{ local_files_dir }}/configs/addons/authorization-jwt/configuration.properties"
+        src: "{{ root_path }}/configs/addons/authorization-jwt/configuration.properties"
         dest: /etc/migratorydata/addons/authorization-jwt/configuration.properties
         force: yes
       notify: Restart migratorydata
-      when: "'{{ local_files_dir }}/configs/addons/authorization-jwt/configuration.properties' is file"
+      when: "'{{ root_path }}/configs/addons/authorization-jwt/configuration.properties' is file"
 
     - name: Copy authorization.jar if it exists
       copy:
-        src: "{{ local_files_dir }}/extensions/authorization.jar"
+        src: "{{ root_path }}/extensions/authorization.jar"
         dest: /usr/share/migratorydata/extensions/authorization.jar
         force: yes
       notify: Restart migratorydata
-      when: "'{{ local_files_dir }}/extensions/authorization.jar' is file"
+      when: "'{{ root_path }}/extensions/authorization.jar' is file"
 
-    - name: Copy audit-log4j-log4j2.xml if it exists
+    - name: Copy audit-log4j/log4j2.xml if it exists
       copy:
-        src: "{{ local_files_dir }}/configs/addons/audit-log4j/log4j2.xml"
+        src: "{{ root_path }}/configs/addons/audit-log4j/log4j2.xml"
         dest: /etc/migratorydata/addons/audit-log4j/log4j2.xml
         force: yes
       notify: Restart migratorydata
-      when: "'{{ local_files_dir }}/configs/addons/audit-log4j/log4j2.xml' is file"
+      when: "'{{ root_path }}/configs/addons/audit-log4j/log4j2.xml' is file"
 
     - name: Copy audit.jar if it exists
       copy:
-        src: "{{ local_files_dir }}/extensions/audit.jar"
+        src: "{{ root_path }}/extensions/audit.jar"
         dest: /usr/share/migratorydata/extensions/audit.jar
         force: yes
       notify: Restart migratorydata
-      when: "'{{ local_files_dir }}/extensions/audit.jar' is file"
+      when: "'{{ root_path }}/extensions/audit.jar' is file"
 
-    - name: Copy kafka consumer.properties if it exists
+    - name: Copy kafka/consumer.properties if it exists
       copy:
-        src: "{{ local_files_dir }}/configs/addons/kafka/consumer.properties"
+        src: "{{ root_path }}/configs/addons/kafka/consumer.properties"
         dest: /etc/migratorydata/addons/kafka/consumer.properties
         force: yes
       notify: Restart migratorydata
-      when: "'{{ local_files_dir }}/configs/addons/kafka/consumer.properties' is file"
+      when: "'{{ root_path }}/configs/addons/kafka/consumer.properties' is file"
 
-    - name: Copy kafka producer.properties if it exists
+    - name: Copy kafka/producer.properties if it exists
       copy:
-        src: "{{ local_files_dir }}/configs/addons/kafka/producer.properties"
+        src: "{{ root_path }}/configs/addons/kafka/producer.properties"
         dest: /etc/migratorydata/addons/kafka/producer.properties
         force: yes
       notify: Restart migratorydata
-      when: "'{{ local_files_dir }}/configs/addons/kafka/producer.properties' is file"
+      when: "'{{ root_path }}/configs/addons/kafka/producer.properties' is file"
 
     - name: Copy migratorydata
       copy:
-        src: "{{ local_files_dir }}/configs/migratorydata"
+        src: "{{ root_path }}/configs/migratorydata"
         dest: /etc/default/migratorydata
         force: yes
       notify: Restart migratorydata
@@ -149,7 +144,7 @@
 
     - name: Download Promtail binary
       get_url:
-        url: "https://github.com/grafana/loki/releases/download/v2.9.5/promtail-linux-amd64.zip"
+        url: "{{ promtail_url }}"
         dest: "/tmp/promtail.zip"
         mode: '0755'
       when: monitor_ip is defined and monitor_ip != ''
@@ -182,7 +177,7 @@
 
     - name: Copy Promtail config file
       template:
-        src: "{{ local_files_dir }}/configs/promtail.j2"
+        src: "{{ root_path }}/configs/monitoring/promtail.j2"
         dest: "/etc/promtail/config.yaml"
       when: monitor_ip is defined and monitor_ip != ''
 

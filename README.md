@@ -2,12 +2,15 @@
 
 A Terraform module to deploy and run MigratoryData on Amazon Web Services (AWS).
 
+This guide provides a step-by-step process to create an infrastructure on AWS using Terraform, and deploy a MigratoryData Push Server cluster using Ansible. It also covers how to add a monitoring module, using Ansible, that installs Prometheus and Grafana for real-time statistics. Additionally, the guide includes instructions on how to update the MigratoryData Push Server across all instances.
+
 ## Prerequisites
 
 Ensure that you have an AWS account and have installed the following tools:
 
   - [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html)
   - [Terraform](https://developer.hashicorp.com/terraform/tutorials/aws-get-started/install-cli)
+  - [Ansible](https://docs.ansible.com/ansible/latest/installation_guide/intro_installation.html)
 
 ## Login to AWS
 
@@ -38,9 +41,7 @@ git checkout ansible
 
 Update if necessary the configuration files from the `deploy/configs` directory. See the [Configuration](https://migratorydata.com/docs/server/configuration/) guide for more details. If you developed custom extensions, add them to the the `deploy/extensions` directory.
 
-When the EC2 machines are created, all the configs and extensions files are copied on each instance.
-
-Update `terraform.tfvars` file to match your configuration. The following variables are required:
+Update `deploy/terraform.tfvars` file to match your configuration. The following variables are required:
 
   - `region` - The AWS region where the resources will be deployed.
   - `availability_zone` - The availability zone where the resources will be deployed.
@@ -69,58 +70,72 @@ ssh_private_key = "~/.ssh/id_rsa"
 enable_monitoring = true
 ```
 
+To update the version of MigratoryData Push server, update the `ansible/vars.yaml` file. The following variables are required:
+
+  - `package_url` - The URL where the MigratoryData package can be downloaded.
+  - `package_name` - The name of the MigratoryData package.
+
 ## SSH keys
 
-For terraform to install all the necessary files on the EC2 instances, you need to provide the private key to access the EC2 machines.
-
-You can generate a new SSH key pair using the `ssh-keygen` command on your local machine, and then set the path to private key to the terraform deployment using var `ssh_private_key`. Here's how you can do it:
+In order to establish a secure connection to the virtual machines, Ansible requires both public and private SSH keys. These keys can be generated on your local machine using the ssh-keygen command. Once generated, the path to the private key can be specified in the `terraform.tfvars` file using the `ssh_private_key` variable. Follow the steps below to generate a new SSH key pair:
 
 ```bash
 ssh-keygen -t rsa -b 4096 -C "your_email@example.com"
 ```
 
-This will generate in the `.ssh` directory a public key, i.e. `~/.ssh/id_rsa.pub`, and a private key, i.e. `~/.ssh/id_rsa`. 
-
-Update `terraform.tfvars` file with the path to the private key.
+Executing this command will create a new RSA key pair with a key size of 4096 bits. The keys will be stored in the `.ssh` directory of your home folder. The public key will be saved as `~/.ssh/id_rsa.pub` and the private key as `~/.ssh/id_rsa`.
 
 
-## Create infrastructure for MigratoryData cluster
+## Deploy the infrastructure
 
-Initialize terraform:
+Before Terraform can manage any resources, it needs to be initialized. Initialization prepares Terraform for use by downloading the necessary provider plugins:
 ```bash
 terraform init
 ```
 
-Check the deployment plan:
+It's always a good practice to check the deployment plan before applying it. This will give you an overview of the changes that will be made to your infrastructure:
 ```bash
 terraform plan
 ```
 
-Apply the deployment plan:
+Once you've reviewed and are satisfied with the deployment plan, you can apply it:
 ```bash
 terraform apply
 ```
 
-## Install all the requirements for ansible
+## Installing Ansible Collections
+
+The provided commands are used to install necessary Ansible collections. Ansible collections are a distribution format for Ansible content that can include playbooks, roles, modules, and plugins.
 
 ```bash
+# This command installs the community.general collection, which includes many of the most commonly used modules and other resources for Ansible.
 ansible-galaxy collection install community.general
+
+# This collection is designed to interact with Prometheus, a powerful open-source monitoring and alerting toolkit.
 ansible-galaxy collection install prometheus.prometheus
+
+# This collection provides modules to interact with Grafana, a popular open-source platform for visualizing metrics, which complements Prometheus.
 ansible-galaxy collection install grafana.grafana
 ```
 
-## Install MigratoryData on the infrastructure
+By running these commands, you ensure that your Ansible environment has the necessary collections to manage and monitor your infrastructure effectively.
 
-After the infrastructure is created, you can install MigratoryData on the virtual machines using the following command:
+
+## Install MigratoryData Push server
+
+By running these commands, you initiate the installation of the MigratoryData Push Server on your infrastructure. The `ansible/install.yaml` playbook automates the installation process, ensuring a consistent setup across all your servers.
 
 ```bash
+# used to disable SSH host key checking
 export ANSIBLE_HOST_KEY_CHECKING=False
+
 ansible-playbook ansible/install.yaml -i artifacts/hosts.ini
 ```
 
-## Install monitoring and logging if enable_monitoring is set to true
 
-If you have enabled monitoring and logging, you can install the monitoring and logging tools on the virtual machines using the following command:
+## Monitoring setup
+
+If the `enable_monitoring` variable is set to true, then you can install grafana and prometheus on the monitor virtual machine using the following command:
 
 ```bash
 # For mac you need tar and gnu-tar
@@ -128,48 +143,78 @@ brew install gnu-tar
 
 # Fix for MAC OS error `ERROR! A worker was found in a dead state`
 export OBJC_DISABLE_INITIALIZE_FORK_SAFETY=YES
+# used to disable SSH host key checking
 export ANSIBLE_HOST_KEY_CHECKING=False
-ansible-playbook ansible/monitoring.yaml -i artifacts/hosts.ini
+
+ansible-playbook ansible/monitor.yaml -i artifacts/hosts.ini
 ```
 
 ## Verify deployment
 
-You can access the MigratoryData cluster using the NLB DNS name. You can find it in the AWS dashboard. You can also find it under `migratorydata_cluster_address` in the output of the following: 
+- You can access the MigratoryData cluster using the public IP address of the load balancer. You can find it running the following command, and find the value of `migratorydata-nlb-dns` in the output:
 
 ```bash
 terraform output 
 ```
 
-Also you can ssh into the virtual machines using the public ip of the virtual machines. You can find it under `cluster-nodes-public-ips` output and ssh into the virtual machines using the following command:
+- You can check the health of the cluster by accessing the load balancer public ip on port `80` with path `/health`.
 
 ```bash
-ssh admin@machine_public_ip
-or
-ssh -i ssh_private_key admin@machine_public_ip
+http://${migratorydata-nlb-dns}/health
 ```
+
+- You can also verify the deployment by SSH-ing into the virtual machines. You can do this using the command `ssh admin@machine_public_ip` or `ssh -i ssh_private_key admin@machine_public_ip` if you need to specify a private key. Once logged in, you can check the status of the MigratoryData service and inspect the logs to ensure everything is running as expected.
+
+```bash
+sudo su
+# Check the status of the MigratoryData service
+systemctl status migratorydata
+
+# Inspect the logs
+nano /var/log/migratorydata/all/out.log
+```
+
+- To access the monitoring tools, you can use the public IP address of the monitor virtual machine. You can find it running the following command, and find the value of `monitor-public-ip-grafana-access` in the output. By default the username and password for Grafana are `admin` and `update_password` respectively:
+
+```bash
+terraform output 
+
+# Access Grafana
+http://${monitor-public-ip-grafana-access}:3000
+```
+
+## Update MigratoryData Push server
+
+The `package_url` and `package_name` variables in the `ansible/vars.yaml` file should be updated to point to the new version of the MigratoryData Push Server. The `package_url` is the URL where the new version can be downloaded, and the `package_name` is the name of the package file.
+
+Update MigratoryData Server running the following commands: 
+
+```bash
+# used to disable SSH host key checking
+export ANSIBLE_HOST_KEY_CHECKING=False
+
+ansible-playbook ansible/update.yaml -i artifacts/hosts.ini
+```
+
+The `ansible/update.yaml` playbook contains tasks that update the MigratoryData Push Server on the machines specified in the `hosts.ini` inventory file. The playbook is designed to sequentially update the MigratoryData Push Server on each server in your infrastructure. The playbook operates on one host to ensure service availability during the update process. The tasks executed on each host include stopping the MigratoryData service, downloading the new MigratoryData Push Server package, updating the package, and restarting the service. After updating each server, Ansible pauses for a period of time before moving to the next server, allowing the updated server to fully restart and rejoin the cluster before the next server is updated.
+
 
 ## Scale
 
-To scale the deployment, update the `num_instances` variable in the `terraform.tfvars` file and run the following commands:
+To scale the deployment, update the `num_instances` variable in the `terraform.tfvars` file. For example, to scale the deployment to 5 instances, update the `num_instances` variable to 5 and run the following commands:
 
 ```bash
 terraform plan
 terraform apply
 ```
 
-If the scale is with increasing the number of instances, you need to run the following command to install MigratoryData on the new instances:
+After the infrastructure is created and the new virtual machines are running, you can install the MigratoryData Push Server on the new virtual machines using the following command:
 
 ```bash
+# used to disable SSH host key checking
 export ANSIBLE_HOST_KEY_CHECKING=False
+
 ansible-playbook ansible/install.yaml -i artifacts/hosts.ini
-```
-
-## Update MigratoryData Server version
-
-Update MigratoryData Server version using variables `package_url` and `package_name` from `vars.yaml` file and run the following command:
-```bash
-export ANSIBLE_HOST_KEY_CHECKING=False
-ansible-playbook ansible/update.yaml -i artifacts/hosts.ini
 ```
 
 ## Uninstall

@@ -2,7 +2,7 @@
 
 A Terraform module to deploy and run MigratoryData on Amazon Web Services (AWS).
 
-This guide provides a step-by-step process to create an infrastructure on AWS using Terraform, and deploy a MigratoryData Push Server cluster using Ansible. It also covers how to add a monitoring module, using Ansible, that installs Prometheus and Grafana for real-time statistics. Additionally, the guide includes instructions on how to update the MigratoryData Push Server across all instances.
+This guide provides a step-by-step process to create an infrastructure on AWS using Terraform, and deploy the MigratoryData server cluster using Ansible. It also covers how to add a monitoring module, using Ansible, that installs Prometheus and Grafana for real-time statistics. Additionally, the guide includes instructions on how to update the MigratoryData server across all instances.
 
 ## Prerequisites
 
@@ -36,7 +36,6 @@ Clone the MigratoryData's repository with terraform configuration files:
 ```bash
 git clone https://github.com/migratorydata/terraform-aws-migratorydata
 cd terraform-aws-migratorydata/deploy
-git checkout ansible
 ```
 
 Update if necessary the configuration files from the `deploy/configs` directory. See the [Configuration](https://migratorydata.com/docs/server/configuration/) guide for more details. If you developed custom extensions, add them to the the `deploy/extensions` directory.
@@ -70,7 +69,7 @@ ssh_private_key = "~/.ssh/id_rsa"
 enable_monitoring = true
 ```
 
-To update the version of MigratoryData Push server, update the `ansible/vars.yaml` file. The following variables are required:
+To update the version of MigratoryData server, update the `ansible/vars.yaml` file. The following variables are required:
 
   - `package_url` - The URL where the MigratoryData package can be downloaded.
   - `package_name` - The name of the MigratoryData package.
@@ -120,10 +119,9 @@ ansible-galaxy collection install grafana.grafana
 
 By running these commands, you ensure that your Ansible environment has the necessary collections to manage and monitor your infrastructure effectively.
 
+## Install MigratoryData server
 
-## Install MigratoryData Push server
-
-By running these commands, you initiate the installation of the MigratoryData Push Server on your infrastructure. The `ansible/install.yaml` playbook automates the installation process, ensuring a consistent setup across all your servers.
+By running these commands, you initiate the installation of the MigratoryData server on your infrastructure. The `ansible/install.yaml` playbook automates the installation process, ensuring a consistent setup across all your servers.
 
 ```bash
 # used to disable SSH host key checking
@@ -131,7 +129,6 @@ export ANSIBLE_HOST_KEY_CHECKING=False
 
 ansible-playbook ansible/install.yaml -i artifacts/hosts.ini
 ```
-
 
 ## Monitoring setup
 
@@ -174,7 +171,7 @@ systemctl status migratorydata
 nano /var/log/migratorydata/all/out.log
 ```
 
-- To access the monitoring tools, you can use the public IP address of the monitor virtual machine. You can find it running the following command, and find the value of `monitor-public-ip-grafana-access` in the output. By default the username and password for Grafana are `admin` and `update_password` respectively:
+- To access the monitoring tools, you can use the public IP address of the monitor virtual machine. You can find it running the following command, and find the value of `monitor-public-ip-grafana-access` in the output. By default the username and password for Grafana are `admin` and `update_password` respectively. To access the MigratoryData dashboard, go to Dashboard -> General in the Grafana UI. For logging, go to Explore and select the `Loki` data source.
 
 ```bash
 terraform output 
@@ -183,11 +180,12 @@ terraform output
 http://${monitor-public-ip-grafana-access}:3000
 ```
 
-## Update MigratoryData Push server
 
-The `package_url` and `package_name` variables in the `ansible/vars.yaml` file should be updated to point to the new version of the MigratoryData Push Server. The `package_url` is the URL where the new version can be downloaded, and the `package_name` is the name of the package file.
+## Update MigratoryData server
 
-Update MigratoryData Server running the following commands: 
+The `package_url` and `package_name` variables in the `ansible/vars.yaml` file should be updated to point to the new version of the MigratoryData server. The `package_url` is the URL where the new version can be downloaded, and the `package_name` is the name of the package file.
+
+Update MigratoryData server running the following commands: 
 
 ```bash
 # used to disable SSH host key checking
@@ -196,8 +194,7 @@ export ANSIBLE_HOST_KEY_CHECKING=False
 ansible-playbook ansible/update.yaml -i artifacts/hosts.ini
 ```
 
-The `ansible/update.yaml` playbook contains tasks that update the MigratoryData Push Server on the machines specified in the `hosts.ini` inventory file. The playbook is designed to sequentially update the MigratoryData Push Server on each server in your infrastructure. The playbook operates on one host to ensure service availability during the update process. The tasks executed on each host include stopping the MigratoryData service, downloading the new MigratoryData Push Server package, updating the package, and restarting the service. After updating each server, Ansible pauses for a period of time before moving to the next server, allowing the updated server to fully restart and rejoin the cluster before the next server is updated.
-
+The `ansible/update.yaml` playbook contains tasks that update the MigratoryData server on the machines specified in the `hosts.ini` inventory file. The playbook is designed to sequentially update the MigratoryData server on each server in your infrastructure. The playbook operates on one host to ensure service availability during the update process. The tasks executed on each host include stopping the MigratoryData service, downloading the new MigratoryData server package, updating the package, and restarting the service. After updating each server, Ansible pauses for a period of time before moving to the next server, allowing the updated server to fully restart and rejoin the cluster before the next server is updated.
 
 ## Scale
 
@@ -208,13 +205,22 @@ terraform plan
 terraform apply
 ```
 
-After the infrastructure is created and the new virtual machines are running, you can install the MigratoryData Push Server on the new virtual machines using the following command:
+After the infrastructure is created and the new virtual machines are running, you can install the MigratoryData server on the new virtual machines using the following command:
 
 ```bash
 # used to disable SSH host key checking
 export ANSIBLE_HOST_KEY_CHECKING=False
 
 ansible-playbook ansible/install.yaml -i artifacts/hosts.ini
+```
+
+If the monitoring is enabled we need to update the monitor virtual machine with the new hosts for the prometheus configuration. Run the following command:
+
+```bash
+# used to disable SSH host key checking
+export ANSIBLE_HOST_KEY_CHECKING=False
+
+ansible-playbook ansible/monitor.yaml -i artifacts/hosts.ini
 ```
 
 ## Uninstall
@@ -227,4 +233,4 @@ terraform destroy
 
 ## Build realtime apps
 
-Use any of the MigratoryData's [client APIs](/docs/client-api/) to develop real-time applications for communication with this MigratoryData cluster.
+Use any of the MigratoryData's [client APIs](https://migratorydata.com/docs/client-api/) to develop real-time applications for communication with this MigratoryData cluster.
